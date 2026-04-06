@@ -1,6 +1,183 @@
 #include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+
+#define InputLimit 20
+#define termLimit 10
+
+typedef struct {
+    char session[InputLimit];
+    int year;
+    double weightsTotal;
+    int hoursTotal;
+} TermEntry;
+
+TermEntry termDict[termLimit];
+int termCount = 0;
+
+TermEntry* getOrCreateTerm(const char *session, int year){
+    for (int i = 0; i < termCount; i++){
+        if(termDict[i].year == year && strcmp(termDict[i].session, session) == 0){
+        return &termDict[i];}
+    }    
+    if (termCount >= termLimit){
+        printf("Term dictionary full, please use existing terms\n");
+        return NULL;
+    }
+    strncpy(termDict[termCount].session, session, 19);
+    termDict[termCount].session[19] = '\0';
+    termDict[termCount].year = year;
+    termDict[termCount].weightsTotal = 0.0;
+    termDict[termCount].hoursTotal = 0;
+    return &termDict[termCount++];
+}    
+
+double getGrade(char Grade){
+    char grade = toupper(Grade);
+    if(grade == 'A'){
+    return 4.0; }
+    if(grade == 'B'){
+    return 3.0; }
+    if(grade == 'C'){
+    return 2.0; }
+    if(grade == 'D'){
+    return 1.0; }
+    if(grade == 'F'){
+    return 0.0; }
+    
+    return -1.0;
+}
+
+void capitalize(char *str) {
+    for (int i = 0; str[i] != '\0'; i++) {
+        str[i] = toupper((unsigned char)str[i]);
+    }
+}
+
+int checkTerm(char *str) {
+    if (strcmp(str, "FALL") == 0 || strcmp(str, "SPRING") == 0 || strcmp(str, "SUMMER") == 0){
+        return 0;}
+    return -1;
+}   
+
+int checkYear(int year){
+    if(year >= 2000){ 
+        return 0;}
+    return -1;
+}
+
+int calculateInputs(char Letter, int Hours, TermEntry *term){
+    
+    double weight;
+    
+    weight = getGrade(Letter);
+    
+    if(weight == -1){
+    printf("Invalid term grade, Please re-enter input\n");
+    return -1;}
+    
+    if( term != NULL ) {
+        term -> weightsTotal += weight * Hours;
+        term -> hoursTotal += Hours;
+    }   
+    
+    return 0;
+}
+
+void printTerm(TermEntry *term){
+    if(term == NULL){
+    printf("Error:NullTerm - Data Not Proccessed\n");
+    return;
+    }
+    
+    double gpa = (term -> hoursTotal > 0) ? 
+                 (term -> weightsTotal / term -> hoursTotal) : 0.0;
+    
+    printf("Term: %s %d (%d Hours) GPA: %.2f\n", term -> session, term -> year, term -> hoursTotal, gpa);
+}
+
+void addTotals(TermEntry *term, double *totalWeight, int *totalHours){
+    if(term == NULL){
+    return;}
+    
+    *totalWeight += term -> weightsTotal;
+    *totalHours += term -> hoursTotal;
+    
+    return;
+}
 
 int main()
 {
+    
+    printf("Enter Grades in the following format: Letter Hour Term Year\n");
+    printf("-------> To stop entering grades, please input a blank line\n");
+    
+    while(1){
+        char input[InputLimit], letter, termSession[InputLimit];
+        
+        int termYear;
+        
+        double hours;
+        
+        TermEntry *selectedTerm;
+        
+        printf("Enter a letter grade and hours for a course with its year and semester: ");
+        fgets(input, sizeof(input), stdin);
+        
+        if(strcmp(input, "\n") == 0){
+        break; }
+        
+        if( sscanf(input, "%c %lf %s %d", &letter, &hours, termSession, &termYear) == 4 ){
+            
+            capitalize(termSession);
+            
+            if( checkTerm(termSession) != 0 ){
+                printf("Invalid Term, Please re-enter input\n");
+                continue;
+            }
+            
+            if( checkYear(termYear) != 0 ){
+                printf("Invalid Year, Please re-enter input with a year post-2000\n");
+                continue;
+            }
+            
+            selectedTerm = getOrCreateTerm(termSession, termYear);
+            
+            if(selectedTerm == NULL){
+            continue;}
+            
+            if( calculateInputs(letter, hours, selectedTerm) == 0 ){
+            continue;}
+            
+        } else {
+            printf("Input Error, Please re-enter input\n");
+        }
+    }
+    
+    double weightsTotal = 0.0;
+    int hoursTotal = 0;    
+       
+    printf("--------------------------------\n");
+    printf("Unoffical Term Grades:\n");
+     
+    if(termCount > 0){
+        for(int i = 0; i < termCount; i++){
+            printTerm(&termDict[i]);
+            addTotals(&termDict[i], &weightsTotal, &hoursTotal); 
+        }
+    } 
+    
+    printf("\n--\n");
+    printf("Unoffical GPA\n"
+           "Total Credit Hours: %d\n"
+           "Total GPA: %.2f\n"
+           "--------------------------------\n", 
+           hoursTotal, weightsTotal);
+    
+    
+    
+    printf("Press Enter to exit...");
+    getchar();
+    
     return 0;
 }
