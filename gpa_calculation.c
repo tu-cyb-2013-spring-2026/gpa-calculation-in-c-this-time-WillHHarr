@@ -88,7 +88,7 @@ int checkTerm(char *str) {
 }   
 
 int checkYear(int year){
-    if(year >= 2000){ 
+    if(year >= 2000 && year <2100){ 
         return 0;}
     return -1;
 }
@@ -167,7 +167,7 @@ int main()
             }
             
             if( checkYear(termYear) != 0 ){
-                printf("Invalid Year, Please re-enter input with a year post-2000\n");
+                printf("Invalid Year, Please re-enter input with a year post-2000 and prior-2100\n");
                 continue;
             }
             
