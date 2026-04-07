@@ -172,7 +172,7 @@ int main()
            "Total Credit Hours: %d\n"
            "Total GPA: %.2f\n"
            "--------------------------------\n", 
-           hoursTotal, weightsTotal);
+           hoursTotal, (weightsTotal/hoursTotal));
     
     
     
