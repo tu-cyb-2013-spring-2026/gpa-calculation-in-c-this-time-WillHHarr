@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <time.h>
+#include <stdlib.h>
 
 #define InputLimit 20
-#define termLimit 10
+#define InitialTermCapacity 10
 
 typedef struct {
     char session[InputLimit];
@@ -12,25 +14,50 @@ typedef struct {
     int hoursTotal;
 } TermEntry;
 
-TermEntry termDict[termLimit];
-int termCount = 0;
+typedef struct {
+    TermEntry *entries;
+    size_t size;
+    size_t capacity;
+} EntryList;
+
+EntryList termDict;
+
+void initDict(EntryList *list, size_t initialCapacity){
+    list -> entries = malloc(initialCapacity * sizeof(TermEntry));
+    list -> size = 0;
+    list -> capacity = initialCapacity;
+}
+
+void expandDict(EntryList *list){
+    size_t newCapacity = list->capacity * 2;
+    
+    TermEntry *newEntries = realloc(list->entries, newCapacity * sizeof(TermEntry));
+    if( !newEntries ){
+        printf("Internal Allocation Errors, Critical Faliure");
+        exit(1);
+    }
+    
+    list->entries = newEntries;
+    list->capacity = newCapacity;
+}
 
 TermEntry* getOrCreateTerm(const char *session, int year){
-    for (int i = 0; i < termCount; i++){
-        if(termDict[i].year == year && strcmp(termDict[i].session, session) == 0){
-        return &termDict[i];}
+    for (int i = 0; i < termDict.size; i++){
+        if(termDict.entries[i].year == year && strcmp(termDict.entries[i].session, session) == 0){
+        return &termDict.entries[i];}
     }    
-    if (termCount >= termLimit){
-        printf("Term dictionary full, please use existing terms\n");
-        return NULL;
+    if (termDict.size >= termDict.capacity){
+        expandDict(&termDict);
     }
-    strncpy(termDict[termCount].session, session, 19);
-    termDict[termCount].session[19] = '\0';
-    termDict[termCount].year = year;
-    termDict[termCount].weightsTotal = 0.0;
-    termDict[termCount].hoursTotal = 0;
-    return &termDict[termCount++];
-}    
+    
+    
+    strncpy(termDict.entries[termDict.size].session, session, 19);
+    termDict.entries[termDict.size].session[19] = '\0';
+    termDict.entries[termDict.size].year = year;
+    termDict.entries[termDict.size].weightsTotal = 0.0;
+    termDict.entries[termDict.size].hoursTotal = 0;
+    return &termDict.entries[termDict.size++];
+}   
 
 double getGrade(char Grade){
     char grade = toupper(Grade);
@@ -109,6 +136,9 @@ void addTotals(TermEntry *term, double *totalWeight, int *totalHours){
 int main()
 {
     
+    initDict(&termDict, (size_t)InitialTermCapacity);
+    
+    
     printf("Enter Grades in the following format: Letter Hour Term Year\n");
     printf("-------> To stop entering grades, please input a blank line\n");
     
@@ -117,7 +147,7 @@ int main()
         
         int termYear;
         
-        double hours;
+        int hours;
         
         TermEntry *selectedTerm;
         
@@ -127,7 +157,7 @@ int main()
         if(strcmp(input, "\n") == 0){
         break; }
         
-        if( sscanf(input, "%c %lf %s %d", &letter, &hours, termSession, &termYear) == 4 ){
+        if( sscanf(input, "%c %d %s %d", &letter, &hours, termSession, &termYear) == 4 ){
             
             capitalize(termSession);
             
@@ -160,10 +190,10 @@ int main()
     printf("--------------------------------\n");
     printf("Unoffical Term Grades:\n");
      
-    if(termCount > 0){
-        for(int i = 0; i < termCount; i++){
-            printTerm(&termDict[i]);
-            addTotals(&termDict[i], &weightsTotal, &hoursTotal); 
+    if(termDict.size > 0){
+        for(int i = 0; i < termDict.size; i++){
+            printTerm(&termDict.entries[i]);
+            addTotals(&termDict.entries[i], &weightsTotal, &hoursTotal); 
         }
     } 
     
