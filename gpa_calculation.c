@@ -199,10 +199,10 @@ int main()
     
     printf("\n--\n");
     printf("Unoffical GPA\n"
-           "Total Credit Hours: %d\n"
            "Total GPA: %.2f\n"
+           "Total Credit Hours: %d\n"
            "--------------------------------\n", 
-           hoursTotal, (weightsTotal/hoursTotal));
+           (weightsTotal/hoursTotal), hoursTotal);
     
     
     
